@@ -4,6 +4,7 @@ import io.dronefleet.mavlink.MavlinkConnection
 import io.dronefleet.mavlink.MavlinkMessage
 import io.dronefleet.mavlink.ardupilotmega.ArdupilotmegaDialect
 import io.dronefleet.mavlink.common.CommandLong
+import io.dronefleet.mavlink.common.GlobalPositionInt
 import io.dronefleet.mavlink.common.MavCmd
 import io.dronefleet.mavlink.minimal.Heartbeat
 import io.dronefleet.mavlink.minimal.MavAutopilot
@@ -73,7 +74,8 @@ suspend fun main(): Unit = coroutineScope {
                 udpSocket.receive(packet)
                 // update remote address
                 currentRemoteAddress = InetSocketAddress(packet.address, packet.port)
-                println("Received packet from ${packet.address.hostAddress}:${packet.port}")
+//                println("Received packet from ${packet.address.hostAddress}:${packet.port}")
+//                println(packet.data.contentToString())
                 pipedOutputStream.write(packet.data, packet.offset, packet.length)
                 pipedOutputStream.flush()
             }
@@ -106,7 +108,14 @@ suspend fun main(): Unit = coroutineScope {
                 null
             }
             if (msg != null) {
-                println("Received message: systemId=${msg.originSystemId}, componentId=${msg.originComponentId}, payload=${msg.payload}")
+//                println("Received message: systemId=${msg.originSystemId}, componentId=${msg.originComponentId}, payload=${msg.payload}")
+                if (msg.payload is GlobalPositionInt) {
+                    val globalPosition = msg as MavlinkMessage<GlobalPositionInt>
+                    println("Received global position: ${globalPosition}")
+                    println("${globalPosition.payload.alt()}")
+                    println("${globalPosition.payload.lat() / 1E7}")
+                    println("${globalPosition.payload.lon() / 1E7}")
+                }
             }
         }
     }
@@ -139,7 +148,7 @@ suspend fun main(): Unit = coroutineScope {
                 .param7(0F)
                 .build()
             println("Sending ARM command")
-            mavlinkConnection.send2(255, 0, armCommand)
+//            mavlinkConnection.send2(255, 0, armCommand)
             udpOut.flush()
             delay(5000)
         }
